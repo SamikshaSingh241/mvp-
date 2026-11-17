@@ -34,7 +34,8 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     const response = await authService.login({ email, password });
-    const { token: receivedToken, user: receivedUser } = response.data;
+    // API wraps payload in { success, message, data } — unwrap it
+    const { token: receivedToken, user: receivedUser } = response.data || response;
     
     setToken(receivedToken);
     setUser(receivedUser);
@@ -46,7 +47,8 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (data) => {
     const response = await authService.register(data);
-    const { token: receivedToken, user: receivedUser } = response.data;
+    // API wraps payload in { success, message, data } — unwrap it
+    const { token: receivedToken, user: receivedUser } = response.data || response;
 
     setToken(receivedToken);
     setUser(receivedUser);
