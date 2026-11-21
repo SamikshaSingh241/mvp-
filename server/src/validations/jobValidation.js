@@ -20,9 +20,8 @@ const jobValidation = [
     .notEmpty()
     .withMessage('Duration is required (e.g. 3 Months, 6 Months, Full-time)'),
   body('salary')
+    .optional()
     .trim()
-    .notEmpty()
-    .withMessage('Salary / stipend is required (specify amount or "Not Disclosed")')
 ];
 
 module.exports = { jobValidation };

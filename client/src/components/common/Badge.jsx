@@ -6,8 +6,8 @@ export const VerificationBadge = ({ status, size = 'sm' }) => {
 
   if (normalized === 'valid' || normalized === 'verified') {
     return (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-sm shadow-emerald-500/10">
-        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#FAF9F6] text-[#A98443] border border-[#C6A15B]">
+        <CheckCircle2 className="w-3.5 h-3.5 text-[#C6A15B]" />
         Verified
       </span>
     );
@@ -15,16 +15,16 @@ export const VerificationBadge = ({ status, size = 'sm' }) => {
 
   if (normalized === 'invalid' || normalized === 'rejected') {
     return (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20 shadow-sm shadow-rose-500/10">
-        <XCircle className="w-3.5 h-3.5 text-rose-400" />
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#FAF9F6] text-[#666666] border border-[#E9E6DF]">
+        <XCircle className="w-3.5 h-3.5 text-[#666666]" />
         Rejected
       </span>
     );
   }
 
   return (
-    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20 shadow-sm shadow-amber-500/10">
-      <Clock className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#FAF9F6] text-[#343538] border border-[#E9E6DF]">
+      <Clock className="w-3.5 h-3.5 text-[#666666]" />
       Pending Review
     </span>
   );
@@ -32,26 +32,12 @@ export const VerificationBadge = ({ status, size = 'sm' }) => {
 
 export const WorkModeBadge = ({ mode }) => {
   const normalized = (mode || 'remote').toLowerCase();
-  if (normalized === 'remote') {
-    return (
-      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">
-        <Globe className="w-3 h-3 text-blue-400" />
-        Remote 🌎
-      </span>
-    );
-  }
-
-  if (normalized === 'hybrid') {
-    return (
-      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20">
-        Hybrid
-      </span>
-    );
-  }
+  const label = normalized === 'remote' ? 'Remote' : normalized === 'hybrid' ? 'Hybrid' : 'Onsite';
 
   return (
-    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-500/10 text-slate-300 border border-slate-500/20">
-      Onsite
+    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#FFFFFF] text-[#202124] border border-[#E9E6DF]">
+      <Globe className="w-3 h-3 text-[#666666]" />
+      {label}
     </span>
   );
 };
@@ -59,14 +45,12 @@ export const WorkModeBadge = ({ mode }) => {
 export const JobTypeBadge = ({ type }) => {
   const isIntern = (type || '').toLowerCase() === 'internship';
   return (
-    <span
-      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${
-        isIntern
-          ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
-          : 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20'
-      }`}
-    >
-      {isIntern ? <GraduationCap className="w-3 h-3" /> : <Briefcase className="w-3 h-3" />}
+    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#FAF9F6] text-[#343538] border border-[#E9E6DF]">
+      {isIntern ? (
+        <GraduationCap className="w-3 h-3 text-[#C6A15B]" />
+      ) : (
+        <Briefcase className="w-3 h-3 text-[#666666]" />
+      )}
       {isIntern ? 'Internship' : 'Full Time'}
     </span>
   );

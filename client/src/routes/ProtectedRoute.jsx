@@ -8,7 +8,7 @@ export const ProtectedRoute = ({ children, allowedRoles = [] }) => {
 
   if (loading) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center text-slate-400 text-xs">
+      <div className="min-h-[60vh] flex items-center justify-center bg-[#FAF9F6] text-[#666666] text-xs">
         Authenticating session...
       </div>
     );
@@ -19,7 +19,7 @@ export const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   }
 
   if (allowedRoles.length > 0 && !allowedRoles.includes(role)) {
-    // If logged in but role not permitted, redirect to user's appropriate home
+    // If logged in but role not permitted, redirect to user's appropriate authorized dashboard
     if (role === 'admin') return <Navigate to="/admin/dashboard" replace />;
     if (role === 'recruiter') return <Navigate to="/recruiter/dashboard" replace />;
     return <Navigate to="/candidate/dashboard" replace />;
@@ -27,3 +27,5 @@ export const ProtectedRoute = ({ children, allowedRoles = [] }) => {
 
   return children;
 };
+
+export default ProtectedRoute;

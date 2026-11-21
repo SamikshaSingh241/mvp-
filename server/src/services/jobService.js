@@ -1,104 +1,244 @@
-const Job = require('../models/Job');
-const Company = require('../models/Company');
-const Application = require('../models/Application');
+const prisma = require('../config/prisma');
+const subscriptionService = require('./subscriptionService');
 
 class JobService {
-  /**
-   * Recruiter creates a job
-   */
   async createJob(userId, jobData) {
-    const company = await Company.findOne({ ownerUserId: userId });
+    const company = await prisma.company.findFirst({ where: { ownerUserId: userId } });
     if (!company) {
       throw new Error('Please set up your company profile before posting a job');
     }
 
-    const job = await Job.create({
-      ...jobData,
-      companyId: company._id,
-      createdBy: userId
+    if (company.verificationStatus !== 'valid') {
+      throw new Error(`Your company verification status is ${company.verificationStatus}. Only admin-approved companies can publish jobs to the marketplace.`);
+    }
+
+    const subscription = await subscriptionService.consumeJobEntitlement(userId);
+    const isFeatured = jobData.featured && subscription?.features?.featuredListing;
+
+    let formattedSalary = jobData.salary;
+    if (jobData.hideSalary) {
+      formattedSalary = 'Not Disclosed';
+    } else if (jobData.type === 'internship') {
+      if (jobData.isPaid === false) {
+        formattedSalary = 'Unpaid Internship';
+      } else if (jobData.stipendMin && jobData.stipendMax) {
+        formattedSalary = `₹${Number(jobData.stipendMin).toLocaleString('en-IN')} - ₹${Number(jobData.stipendMax).toLocaleString('en-IN')}/mo`;
+      } else if (jobData.stipendMin) {
+        formattedSalary = `₹${Number(jobData.stipendMin).toLocaleString('en-IN')}/mo`;
+      }
+    } else if (jobData.salaryMin && jobData.salaryMax) {
+      formattedSalary = `₹${Number(jobData.salaryMin).toLocaleString('en-IN')} - ₹${Number(jobData.salaryMax).toLocaleString('en-IN')}/${jobData.salaryPeriod || 'year'}`;
+    } else if (jobData.salaryMin) {
+      formattedSalary = `₹${Number(jobData.salaryMin).toLocaleString('en-IN')}/${jobData.salaryPeriod || 'year'}`;
+    }
+
+    const job = await prisma.job.create({
+      data: {
+        title: jobData.title,
+        type: jobData.type || 'internship',
+        description: jobData.description,
+        skills: Array.isArray(jobData.skills) ? jobData.skills : [],
+        salary: formattedSalary || jobData.salary || 'Competitive',
+        salaryMin: jobData.salaryMin ? Number(jobData.salaryMin) : null,
+        salaryMax: jobData.salaryMax ? Number(jobData.salaryMax) : null,
+        currency: jobData.currency || 'INR',
+        salaryPeriod: jobData.salaryPeriod || 'yearly',
+        hideSalary: !!jobData.hideSalary,
+        isNegotiable: !!jobData.isNegotiable,
+        isPaid: jobData.isPaid !== undefined ? !!jobData.isPaid : true,
+        stipendMin: jobData.stipendMin ? Number(jobData.stipendMin) : null,
+        stipendMax: jobData.stipendMax ? Number(jobData.stipendMax) : null,
+        featured: !!isFeatured,
+        duration: jobData.duration || 'Full-time',
+        workMode: jobData.workMode || 'remote',
+        location: jobData.location || 'Remote',
+        deadline: jobData.deadline ? new Date(jobData.deadline) : null,
+        status: jobData.status || 'published',
+        companyId: company.id,
+        createdById: userId
+      },
+      include: {
+        company: true
+      }
     });
 
-    return await job.populate('companyId');
+    job._id = job.id;
+    job.company._id = job.company.id;
+    job.companyId = job.company;
+    return job;
   }
 
-  /**
-   * Recruiter gets their own jobs
-   */
+  async deleteJob(userId, jobId) {
+    const job = await prisma.job.findUnique({ where: { id: jobId } });
+    if (!job) {
+      throw new Error('Job listing not found');
+    }
+
+    if (job.createdById !== userId) {
+      throw new Error('Unauthorized to delete this job');
+    }
+
+    if (job.status === 'published') {
+      await subscriptionService.releaseJobEntitlement(job.companyId);
+    }
+
+    await prisma.job.delete({ where: { id: jobId } });
+    return { success: true, message: 'Job deleted successfully' };
+  }
+
   async getRecruiterJobs(userId) {
-    const company = await Company.findOne({ ownerUserId: userId });
+    const company = await prisma.company.findFirst({ where: { ownerUserId: userId } });
     if (!company) {
       return { jobs: [], company: null };
     }
 
-    const jobs = await Job.find({ companyId: company._id })
-      .populate('companyId')
-      .sort({ createdAt: -1 });
-
-    // Count applications for each job
-    const jobIds = jobs.map((j) => j._id);
-    const applications = await Application.find({ jobId: { $in: jobIds } });
-
-    const jobsWithCounts = jobs.map((job) => {
-      const appCount = applications.filter((a) => a.jobId.toString() === job._id.toString()).length;
-      return {
-        ...job.toObject(),
-        applicationCount: appCount
-      };
+    const jobs = await prisma.job.findMany({
+      where: { companyId: company.id },
+      include: { company: true },
+      orderBy: { createdAt: 'desc' }
     });
 
+    const jobIds = jobs.map((j) => j.id);
+    const applications = await prisma.application.findMany({
+      where: { jobId: { in: jobIds } },
+      select: { jobId: true }
+    });
+
+    const jobsWithCounts = jobs.map((job) => {
+      const appCount = applications.filter((a) => a.jobId === job.id).length;
+      const formatted = { ...job, _id: job.id, applicationCount: appCount };
+      if (formatted.company) {
+        formatted.company._id = formatted.company.id;
+        formatted.companyId = formatted.company;
+      }
+      return formatted;
+    });
+
+    company._id = company.id;
     return {
       company,
       jobs: jobsWithCounts
     };
   }
 
-  /**
-   * Recruiter updates/edits a job
-   */
   async updateJob(userId, jobId, updateData) {
-    const job = await Job.findById(jobId);
+    const job = await prisma.job.findUnique({ where: { id: jobId } });
     if (!job) {
       throw new Error('Job listing not found');
     }
 
-    if (job.createdBy.toString() !== userId.toString()) {
+    if (job.createdById !== userId) {
       throw new Error('Unauthorized to modify this job');
     }
 
-    Object.assign(job, updateData);
-    await job.save();
+    const wasPublished = job.status === 'published';
+    const isNowClosed = updateData.status === 'closed';
 
-    return await job.populate('companyId');
-  }
+    const cleanUpdate = { ...updateData };
+    if (cleanUpdate.deadline) cleanUpdate.deadline = new Date(cleanUpdate.deadline);
+    if (cleanUpdate.salaryMin) cleanUpdate.salaryMin = Number(cleanUpdate.salaryMin);
+    if (cleanUpdate.salaryMax) cleanUpdate.salaryMax = Number(cleanUpdate.salaryMax);
+    if (cleanUpdate.stipendMin) cleanUpdate.stipendMin = Number(cleanUpdate.stipendMin);
+    if (cleanUpdate.stipendMax) cleanUpdate.stipendMax = Number(cleanUpdate.stipendMax);
 
-  /**
-   * Recruiter dashboard metrics
-   */
-  async getRecruiterDashboardData(userId) {
-    let company = await Company.findOne({ ownerUserId: userId });
-    if (!company) {
-      company = await Company.create({
-        ownerUserId: userId,
-        name: 'My Company',
-        verificationStatus: 'pending'
-      });
+    const updatedJob = await prisma.job.update({
+      where: { id: jobId },
+      data: cleanUpdate,
+      include: { company: true }
+    });
+
+    if (wasPublished && isNowClosed) {
+      await subscriptionService.releaseJobEntitlement(job.companyId);
     }
 
-    const jobs = await Job.find({ companyId: company._id }).sort({ createdAt: -1 });
+    updatedJob._id = updatedJob.id;
+    if (updatedJob.company) {
+      updatedJob.company._id = updatedJob.company.id;
+      updatedJob.companyId = updatedJob.company;
+    }
+    return updatedJob;
+  }
+
+  async getRecruiterDashboardData(userId) {
+    const company = await prisma.company.findFirst({ where: { ownerUserId: userId } });
+    if (!company) {
+      return {
+        company: null,
+        stats: {
+          totalJobs: 0,
+          activeJobs: 0,
+          draftJobs: 0,
+          closedJobs: 0,
+          expiredJobs: 0,
+          totalApplications: 0,
+          pendingApplications: 0,
+          shortlistedCount: 0,
+          rejectedCount: 0,
+          scheduledInterviews: 0
+        },
+        jobs: [],
+        recentApplications: [],
+        canBePublic: false,
+        subscription: null
+      };
+    }
+
+    company._id = company.id;
+    const jobs = await prisma.job.findMany({
+      where: { companyId: company.id },
+      orderBy: { createdAt: 'desc' }
+    });
+
     const totalJobs = jobs.length;
     const activeJobs = jobs.filter((j) => j.status === 'published').length;
     const draftJobs = jobs.filter((j) => j.status === 'draft').length;
     const closedJobs = jobs.filter((j) => j.status === 'closed').length;
+    const now = new Date();
+    const expiredJobs = jobs.filter((j) => (j.deadline && new Date(j.deadline) < now) || j.status === 'closed').length;
 
-    const jobIds = jobs.map((j) => j._id);
-    const recentApplications = await Application.find({ jobId: { $in: jobIds } })
-      .populate({
-        path: 'candidateId',
-        select: 'email'
-      })
-      .populate('jobId', 'title type')
-      .sort({ appliedAt: -1 })
-      .limit(10);
+    const jobIds = jobs.map((j) => j.id);
+    const allApplications = await prisma.application.findMany({
+      where: { jobId: { in: jobIds } }
+    });
+
+    const totalApplications = allApplications.length;
+    const pendingApplications = allApplications.filter((a) => a.status === 'applied' || a.status === 'under_review').length;
+    const shortlistedCount = allApplications.filter((a) => a.status === 'shortlisted').length;
+    const rejectedCount = allApplications.filter((a) => a.status === 'rejected').length;
+    const scheduledInterviews = allApplications.filter((a) => a.status === 'accepted').length;
+
+    const recentApplications = await prisma.application.findMany({
+      where: { jobId: { in: jobIds } },
+      include: {
+        candidate: { select: { email: true } },
+        job: { select: { title: true, type: true } }
+      },
+      orderBy: { appliedAt: 'desc' },
+      take: 10
+    });
+
+    const formattedRecentApplications = recentApplications.map((a) => {
+      const app = { ...a, _id: a.id };
+      if (app.candidate) {
+        app.candidateId = { email: app.candidate.email };
+      }
+      if (app.job) {
+        app.jobId = { title: app.job.title, type: app.job.type };
+      }
+      return app;
+    });
+
+    const jobsWithCounts = jobs.map((job) => {
+      const appCount = allApplications.filter((a) => a.jobId === job.id).length;
+      return {
+        ...job,
+        _id: job.id,
+        applicationCount: appCount,
+        viewsCount: job.viewsCount || 0
+      };
+    });
+
+    const activeSubscription = await subscriptionService.getActiveSubscription(userId);
 
     return {
       company,
@@ -107,47 +247,48 @@ class JobService {
         activeJobs,
         draftJobs,
         closedJobs,
-        totalApplications: recentApplications.length
+        expiredJobs,
+        totalApplications,
+        pendingApplications,
+        shortlistedCount,
+        rejectedCount,
+        scheduledInterviews
       },
-      jobs,
-      recentApplications,
-      canBePublic: company.verificationStatus === 'valid'
+      jobs: jobsWithCounts,
+      recentApplications: formattedRecentApplications,
+      canBePublic: company.verificationStatus === 'valid',
+      subscription: activeSubscription
     };
   }
 
-  /**
-   * PUBLIC JOB BOARD
-   * STRICT ENFORCEMENT: ONLY jobs from companies with verificationStatus === 'valid'
-   * and status === 'published'.
-   */
   async getPublicJobs({ search, location, skills, workMode, type, limit = 20, page = 1 }) {
-    // 1. Find all verified companies
-    const validCompanies = await Company.find({ verificationStatus: 'valid' }).select('_id');
-    const validCompanyIds = validCompanies.map((c) => c._id);
+    const validCompanies = await prisma.company.findMany({
+      where: { verificationStatus: 'valid' },
+      select: { id: true }
+    });
+    const validCompanyIds = validCompanies.map((c) => c.id);
 
-    // Build job query
-    const query = {
-      companyId: { $in: validCompanyIds },
+    const where = {
+      companyId: { in: validCompanyIds },
       status: 'published'
     };
 
     if (type && type !== 'all') {
-      query.type = type;
+      where.type = type;
     }
 
     if (workMode && workMode !== 'all') {
-      query.workMode = workMode;
+      where.workMode = workMode;
     }
 
     if (location && location.trim() !== '') {
-      query.location = { $regex: location.trim(), $options: 'i' };
+      where.location = { contains: location.trim(), mode: 'insensitive' };
     }
 
     if (search && search.trim() !== '') {
-      query.$or = [
-        { title: { $regex: search.trim(), $options: 'i' } },
-        { description: { $regex: search.trim(), $options: 'i' } },
-        { skills: { $in: [new RegExp(search.trim(), 'i')] } }
+      where.OR = [
+        { title: { contains: search.trim(), mode: 'insensitive' } },
+        { description: { contains: search.trim(), mode: 'insensitive' } }
       ];
     }
 
@@ -157,45 +298,83 @@ class JobService {
         : skills.split(',').map((s) => s.trim()).filter(Boolean);
 
       if (skillsArray.length > 0) {
-        query.skills = { $in: skillsArray.map((s) => new RegExp(s, 'i')) };
+        where.skills = { hasSome: skillsArray };
       }
     }
 
-    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const take = parseInt(limit, 10);
+    const skip = (parseInt(page, 10) - 1) * take;
 
     const [jobs, total] = await Promise.all([
-      Job.find(query)
-        .populate('companyId', 'name website industry size location logoUrl verificationStatus')
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(parseInt(limit)),
-      Job.countDocuments(query)
+      prisma.job.findMany({
+        where,
+        include: {
+          company: {
+            select: {
+              id: true,
+              name: true,
+              website: true,
+              industry: true,
+              size: true,
+              location: true,
+              logoUrl: true,
+              verificationStatus: true
+            }
+          }
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take
+      }),
+      prisma.job.count({ where })
     ]);
 
+    const formattedJobs = jobs.map((job) => {
+      const j = { ...job, _id: job.id };
+      if (j.company) {
+        j.company._id = j.company.id;
+        j.companyId = j.company;
+      }
+      return j;
+    });
+
     return {
-      jobs,
+      jobs: formattedJobs,
       total,
-      page: parseInt(page),
-      totalPages: Math.ceil(total / parseInt(limit))
+      page: parseInt(page, 10),
+      totalPages: Math.ceil(total / take)
     };
   }
 
-  /**
-   * Get single job details (public only if company is valid)
-   */
   async getJobById(jobId, currentUser = null) {
-    const job = await Job.findById(jobId).populate('companyId');
+    const job = await prisma.job.findUnique({
+      where: { id: jobId },
+      include: { company: true }
+    });
+
     if (!job) {
       throw new Error('Job listing not found');
     }
 
-    const isCompanyValid = job.companyId && job.companyId.verificationStatus === 'valid';
+    const isCompanyValid = job.company && job.company.verificationStatus === 'valid';
     const isOwner =
       currentUser &&
-      (job.createdBy.toString() === currentUser._id.toString() || currentUser.role === 'admin');
+      (job.createdById === currentUser.id || currentUser.role === 'admin');
 
     if (!isCompanyValid && !isOwner) {
       throw new Error('This job listing is currently under administrative company verification and is not publicly visible');
+    }
+
+    await prisma.job.update({
+      where: { id: jobId },
+      data: { viewsCount: { increment: 1 } }
+    });
+
+    job.viewsCount = (job.viewsCount || 0) + 1;
+    job._id = job.id;
+    if (job.company) {
+      job.company._id = job.company.id;
+      job.companyId = job.company;
     }
 
     return job;

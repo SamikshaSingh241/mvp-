@@ -1,14 +1,12 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { CheckCircle2, AlertCircle } from 'lucide-react';
 
-export const ProfileCompletionRing = ({ score = 0, size = 110, strokeWidth = 10 }) => {
+export const ProfileCompletionRing = ({ score = 0, size = 100, strokeWidth = 8 }) => {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (score / 100) * circumference;
 
   const isComplete = score >= 70;
-  const strokeColor = isComplete ? '#22C55E' : score >= 40 ? '#F59E0B' : '#EF4444';
 
   return (
     <div className="flex flex-col items-center justify-center">
@@ -19,44 +17,44 @@ export const ProfileCompletionRing = ({ score = 0, size = 110, strokeWidth = 10 
             cx={size / 2}
             cy={size / 2}
             r={radius}
-            stroke="currentColor"
+            stroke="#E9E6DF"
             strokeWidth={strokeWidth}
-            className="text-slate-800"
             fill="transparent"
           />
-          {/* Progress Ring */}
-          <motion.circle
+          {/* Progress Ring in Muted Gold */}
+          <circle
             cx={size / 2}
             cy={size / 2}
             r={radius}
-            stroke={strokeColor}
+            stroke="#C6A15B"
             strokeWidth={strokeWidth}
             strokeDasharray={circumference}
-            initial={{ strokeDashoffset: circumference }}
-            animate={{ strokeDashoffset }}
-            transition={{ duration: 1.2, ease: 'easeOut' }}
+            strokeDashoffset={strokeDashoffset}
             strokeLinecap="round"
             fill="transparent"
+            className="transition-all duration-700 ease-out"
           />
         </svg>
 
         {/* Center Percentage Display */}
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-          <span className="text-xl font-extrabold text-white">{score}%</span>
-          <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">
-            {isComplete ? 'Complete' : 'In Progress'}
+          <span className="text-lg font-bold text-[#202124]">{score}%</span>
+          <span className="text-[9px] text-[#666666] uppercase tracking-wider font-bold">
+            {isComplete ? 'Ready' : 'Draft'}
           </span>
         </div>
       </div>
 
-      <div className="mt-3 flex items-center gap-1.5 text-xs">
+      <div className="mt-2.5 flex items-center gap-1.5 text-xs text-[#666666]">
         {isComplete ? (
-          <span className="text-emerald-400 flex items-center gap-1 font-medium">
-            <CheckCircle2 className="w-4 h-4" /> Ready to Apply
+          <span className="flex items-center gap-1 text-[#C6A15B] font-bold">
+            <CheckCircle2 className="w-3.5 h-3.5 text-[#C6A15B]" />
+            Application Ready
           </span>
         ) : (
-          <span className="text-amber-400 flex items-center gap-1 font-medium">
-            <AlertCircle className="w-4 h-4" /> Reach 70% to unlock priority matching
+          <span className="flex items-center gap-1 text-[#666666] font-medium">
+            <AlertCircle className="w-3.5 h-3.5 text-[#C6A15B]" />
+            Complete profile to unlock direct hiring
           </span>
         )}
       </div>

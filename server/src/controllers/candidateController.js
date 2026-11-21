@@ -63,10 +63,52 @@ const getApplications = async (req, res, next) => {
   }
 };
 
+const deleteResume = async (req, res, next) => {
+  try {
+    const data = await candidateService.deleteResume(req.user._id);
+    return successResponse(res, 'Resume deleted successfully', data);
+  } catch (error) {
+    return errorResponse(res, error.message, 400);
+  }
+};
+
+const saveJob = async (req, res, next) => {
+  try {
+    const { jobId } = req.params;
+    const savedJobs = await candidateService.saveJob(req.user._id, jobId);
+    return successResponse(res, 'Job saved successfully', savedJobs);
+  } catch (error) {
+    return errorResponse(res, error.message, 400);
+  }
+};
+
+const unsaveJob = async (req, res, next) => {
+  try {
+    const { jobId } = req.params;
+    const savedJobs = await candidateService.unsaveJob(req.user._id, jobId);
+    return successResponse(res, 'Job removed from saved list', savedJobs);
+  } catch (error) {
+    return errorResponse(res, error.message, 400);
+  }
+};
+
+const getSavedJobs = async (req, res, next) => {
+  try {
+    const savedJobs = await candidateService.getSavedJobs(req.user._id);
+    return successResponse(res, 'Saved jobs retrieved', savedJobs);
+  } catch (error) {
+    return errorResponse(res, error.message, 400);
+  }
+};
+
 module.exports = {
   getProfile,
   updateProfile,
   uploadResume,
+  deleteResume,
+  saveJob,
+  unsaveJob,
+  getSavedJobs,
   getDashboard,
   applyJob,
   getApplications

@@ -6,17 +6,10 @@ export const Toast = ({ message, type = 'success', onClose }) => {
   if (!message) return null;
 
   const icons = {
-    success: <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />,
-    warning: <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />,
-    error: <XCircle className="w-5 h-5 text-rose-400 shrink-0" />,
-    info: <Info className="w-5 h-5 text-blue-400 shrink-0" />
-  };
-
-  const borderColors = {
-    success: 'border-emerald-500/30 bg-emerald-950/80',
-    warning: 'border-amber-500/30 bg-amber-950/80',
-    error: 'border-rose-500/30 bg-rose-950/80',
-    info: 'border-blue-500/30 bg-blue-950/80'
+    success: <CheckCircle2 className="w-5 h-5 text-[#C6A15B] shrink-0" />,
+    warning: <AlertTriangle className="w-5 h-5 text-[#C6A15B] shrink-0" />,
+    error: <XCircle className="w-5 h-5 text-[#202124] shrink-0" />,
+    info: <Info className="w-5 h-5 text-[#C6A15B] shrink-0" />
   };
 
   return (
@@ -25,14 +18,14 @@ export const Toast = ({ message, type = 'success', onClose }) => {
         initial={{ opacity: 0, y: -20, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: -20, scale: 0.95 }}
-        className={`fixed top-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl border backdrop-blur-xl shadow-2xl text-slate-100 text-sm max-w-md ${borderColors[type]}`}
+        className="fixed top-6 right-6 z-50 flex items-center gap-3 px-4 py-3.5 rounded-2xl border border-[#E9E6DF] bg-[#FFFFFF] shadow-2xl text-[#202124] text-sm max-w-md"
       >
-        {icons[type]}
-        <p className="flex-1 font-medium">{message}</p>
+        {icons[type] || icons.info}
+        <p className="flex-1 font-medium text-xs leading-relaxed">{message}</p>
         {onClose && (
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-white p-1 rounded-lg transition-colors cursor-pointer"
+            className="text-[#666666] hover:text-[#202124] p-1 rounded-lg transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -41,3 +34,5 @@ export const Toast = ({ message, type = 'success', onClose }) => {
     </AnimatePresence>
   );
 };
+
+export default Toast;

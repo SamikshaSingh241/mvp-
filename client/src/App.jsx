@@ -7,12 +7,16 @@ import { ProtectedRoute } from './routes/ProtectedRoute';
 import { LandingPage } from './pages/LandingPage';
 import { PublicJobsPage } from './pages/jobs/PublicJobsPage';
 import { Login } from './pages/auth/Login';
+import { VerifyOtp } from './pages/auth/VerifyOtp';
+import { EmailTemplatesPreview } from './pages/EmailTemplatesPreview';
 import { CandidateRegister } from './pages/auth/CandidateRegister';
 import { RecruiterRegister } from './pages/auth/RecruiterRegister';
 import { CandidateProfile } from './pages/candidate/CandidateProfile';
 import { CandidateDashboard } from './pages/candidate/CandidateDashboard';
 import { RecruiterDashboard } from './pages/recruiter/RecruiterDashboard';
 import { CompanyProfile } from './pages/recruiter/CompanyProfile';
+import { Pricing } from './pages/recruiter/Pricing';
+import { Billing } from './pages/recruiter/Billing';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { NotFound } from './pages/NotFound';
 
@@ -23,7 +27,11 @@ export const App = () => {
         {/* Public Routes */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/jobs" element={<PublicJobsPage />} />
+        <Route path="/pricing" element={<Pricing />} />
+        <Route path="/recruiter/pricing" element={<Pricing />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/verify-otp" element={<VerifyOtp />} />
+        <Route path="/email-templates" element={<EmailTemplatesPreview />} />
         <Route path="/register/candidate" element={<CandidateRegister />} />
         <Route path="/register/recruiter" element={<RecruiterRegister />} />
 
@@ -59,6 +67,14 @@ export const App = () => {
           element={
             <ProtectedRoute allowedRoles={['recruiter']}>
               <CompanyProfile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/recruiter/billing"
+          element={
+            <ProtectedRoute allowedRoles={['recruiter']}>
+              <Billing />
             </ProtectedRoute>
           }
         />

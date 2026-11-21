@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { jobService } from '../../services/jobService';
 import { candidateService } from '../../services/candidateService';
 import { useAuth } from '../../context/AuthContext';
@@ -10,14 +10,8 @@ import { Button } from '../../components/common/Button';
 import {
   Search,
   MapPin,
-  Filter,
   ShieldCheck,
   Briefcase,
-  GraduationCap,
-  Sparkles,
-  RefreshCw,
-  Globe,
-  SlidersHorizontal,
   X
 } from 'lucide-react';
 
@@ -63,7 +57,6 @@ export const PublicJobsPage = () => {
     }
   };
 
-  // Fetch candidate applied jobs if logged in
   useEffect(() => {
     if (isAuthenticated && role === 'candidate') {
       candidateService
@@ -95,7 +88,7 @@ export const PublicJobsPage = () => {
 
     if (role !== 'candidate') {
       setToast({
-        message: 'Only candidates can apply to positions. Switch or create a candidate account.',
+        message: 'Only candidates can apply to positions. Please log in as a candidate.',
         type: 'warning'
       });
       return;
@@ -105,10 +98,7 @@ export const PublicJobsPage = () => {
     try {
       await candidateService.applyJob(job._id, note);
       setAppliedJobIds((prev) => [...prev, job._id]);
-      setToast({
-        message: `Application submitted successfully to ${job.companyId?.name || 'company'}!`,
-        type: 'success'
-      });
+      setToast({ message: 'Application submitted successfully!', type: 'success' });
       setIsModalOpen(false);
     } catch (err) {
       setToast({
@@ -132,8 +122,7 @@ export const PublicJobsPage = () => {
   const POPULAR_SKILLS = ['React', 'TypeScript', 'Node.js', 'Python', 'Tailwind CSS', 'Figma', 'Next.js'];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 relative">
-      {/* Toast */}
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 bg-[#FAF9F6] text-[#202124]">
       {toast && (
         <Toast
           message={toast.message}
@@ -143,51 +132,50 @@ export const PublicJobsPage = () => {
       )}
 
       {/* Page Header */}
-      <div className="space-y-3 mb-8">
+      <div className="space-y-2 mb-6">
         <div className="flex items-center gap-2">
-          <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5">
-            <ShieldCheck className="w-3.5 h-3.5" />
+          <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#FFFFFF] text-[#202124] border border-[#E9E6DF] flex items-center gap-1.5 shadow-subtle">
+            <ShieldCheck className="w-3.5 h-3.5 text-[#C6A15B]" />
             100% Verified Employers
           </span>
-          <span className="text-xs text-slate-400">
-            Unverified companies and flagged listings are automatically filtered out.
+          <span className="text-xs text-[#666666]">
+            Only approved companies and listings are shown.
           </span>
         </div>
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-white">
-          Verified Opportunities
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-[#202124]">
+          Job &amp; Internship Openings
         </h1>
-        <p className="text-sm text-slate-400">
-          Showing <span className="font-bold text-white">{total}</span> approved internships and full-time positions from vetted organizations.
+        <p className="text-xs text-[#666666]">
+          Showing <span className="font-bold text-[#202124]">{total}</span> authenticated listings.
         </p>
       </div>
 
-      {/* Advanced Filter Toolbar */}
-      <div className="glass-panel rounded-2xl p-4 sm:p-5 mb-8 border border-slate-800 space-y-4">
-        {/* Search bar row */}
-        <form onSubmit={handleSearchSubmit} className="flex flex-col sm:flex-row gap-3">
+      {/* Filter Toolbar */}
+      <div className="bg-[#FFFFFF] rounded-2xl p-4 sm:p-5 mb-8 border border-[#E9E6DF] shadow-card space-y-3.5">
+        <form onSubmit={handleSearchSubmit} className="flex flex-col sm:flex-row gap-2.5">
           <div className="relative flex-1">
-            <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-3.5" />
+            <Search className="w-3.5 h-3.5 text-[#666666] absolute left-3 top-3" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by role, keyword, or company..."
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+              className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-[#FAF9F6] border border-[#E9E6DF] text-xs text-[#202124] placeholder-[#666666] focus:bg-[#FFFFFF] focus:outline-none focus:border-[#C6A15B] transition-colors"
             />
           </div>
 
-          <div className="relative sm:w-64">
-            <MapPin className="w-4 h-4 text-slate-500 absolute left-3.5 top-3.5" />
+          <div className="relative sm:w-60">
+            <MapPin className="w-3.5 h-3.5 text-[#666666] absolute left-3 top-3" />
             <input
               type="text"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              placeholder="Location (e.g. San Francisco, Remote)"
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+              placeholder="Location or Remote..."
+              className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-[#FAF9F6] border border-[#E9E6DF] text-xs text-[#202124] placeholder-[#666666] focus:bg-[#FFFFFF] focus:outline-none focus:border-[#C6A15B] transition-colors"
             />
           </div>
 
-          <Button type="submit" variant="primary" size="md">
+          <Button type="submit" variant="primary" size="sm">
             Search
           </Button>
 
@@ -195,7 +183,7 @@ export const PublicJobsPage = () => {
             <Button
               type="button"
               variant="ghost"
-              size="md"
+              size="sm"
               onClick={clearAllFilters}
               icon={X}
             >
@@ -205,18 +193,17 @@ export const PublicJobsPage = () => {
         </form>
 
         {/* Filter Pills row */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-800/60 text-xs">
-          {/* Type toggles */}
-          <div className="flex items-center gap-2">
-            <span className="text-slate-400 font-semibold mr-1">Role:</span>
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-[#E9E6DF] text-xs">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[#666666] mr-1">Role:</span>
             {['all', 'internship', 'job'].map((t) => (
               <button
                 key={t}
                 onClick={() => setType(t)}
-                className={`px-3 py-1 rounded-lg capitalize font-medium transition-all cursor-pointer ${
+                className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
                   type === t
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                    ? 'bg-[#C6A15B] text-[#202124] shadow-sm'
+                    : 'bg-[#FAF9F6] text-[#343538] border border-[#E9E6DF] hover:bg-[#FFFFFF]'
                 }`}
               >
                 {t === 'all' ? 'All Roles' : t === 'internship' ? 'Internships' : 'Full Time'}
@@ -224,20 +211,19 @@ export const PublicJobsPage = () => {
             ))}
           </div>
 
-          {/* Work Mode toggles */}
-          <div className="flex items-center gap-2">
-            <span className="text-slate-400 font-semibold mr-1">Work Mode:</span>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[#666666] mr-1">Mode:</span>
             {['all', 'remote', 'hybrid', 'onsite'].map((m) => (
               <button
                 key={m}
                 onClick={() => setWorkMode(m)}
-                className={`px-3 py-1 rounded-lg capitalize font-medium transition-all cursor-pointer ${
+                className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
                   workMode === m
-                    ? 'bg-indigo-600 text-white shadow-sm'
-                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                    ? 'bg-[#C6A15B] text-[#202124] shadow-sm'
+                    : 'bg-[#FAF9F6] text-[#343538] border border-[#E9E6DF] hover:bg-[#FFFFFF]'
                 }`}
               >
-                {m === 'all' ? 'Any Mode' : m === 'remote' ? 'Remote 🌎' : m}
+                {m === 'all' ? 'Any Mode' : m === 'remote' ? 'Remote' : m === 'hybrid' ? 'Hybrid' : 'Onsite'}
               </button>
             ))}
           </div>
@@ -245,15 +231,15 @@ export const PublicJobsPage = () => {
 
         {/* Popular Skills row */}
         <div className="flex items-center gap-1.5 flex-wrap pt-1 text-[11px]">
-          <span className="text-slate-400 font-semibold">Popular Skills:</span>
+          <span className="text-[#666666]">Popular:</span>
           {POPULAR_SKILLS.map((skill) => (
             <button
               key={skill}
               onClick={() => setSelectedSkill(selectedSkill === skill ? '' : skill)}
-              className={`px-2 py-0.5 rounded-md border transition-all cursor-pointer ${
+              className={`px-2.5 py-0.5 rounded-full border transition-colors cursor-pointer ${
                 selectedSkill === skill
-                  ? 'bg-blue-500/20 text-blue-300 border-blue-500/40 font-semibold'
-                  : 'bg-slate-800/40 text-slate-400 border-slate-700/60 hover:text-white'
+                  ? 'bg-[#202124] text-[#FAF9F6] border-[#202124]'
+                  : 'bg-[#FAF9F6] text-[#666666] border-[#E9E6DF] hover:border-[#C6A15B] hover:text-[#202124]'
               }`}
             >
               {skill}
@@ -264,39 +250,39 @@ export const PublicJobsPage = () => {
 
       {/* Job Grid or Loading State */}
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {[1, 2, 3, 4, 5, 6].map((n) => (
             <div
               key={n}
-              className="h-64 rounded-2xl bg-slate-900/50 border border-slate-800 animate-pulse p-6 space-y-4"
+              className="h-56 rounded-2xl bg-[#FFFFFF] border border-[#E9E6DF] p-5 space-y-3"
             >
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-slate-800" />
-                <div className="space-y-2 flex-1">
-                  <div className="h-4 bg-slate-800 rounded w-3/4" />
-                  <div className="h-3 bg-slate-800 rounded w-1/2" />
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-xl bg-[#FAF9F6] border border-[#E9E6DF]" />
+                <div className="space-y-1.5 flex-1">
+                  <div className="h-3.5 bg-[#FAF9F6] rounded w-1/2" />
+                  <div className="h-3 bg-[#FAF9F6] rounded w-1/3" />
                 </div>
               </div>
-              <div className="h-4 bg-slate-800 rounded w-full" />
-              <div className="h-10 bg-slate-800 rounded w-full" />
+              <div className="h-4 bg-[#FAF9F6] rounded w-3/4" />
+              <div className="h-8 bg-[#FAF9F6] rounded w-full" />
             </div>
           ))}
         </div>
       ) : jobs.length === 0 ? (
-        <div className="text-center py-20 glass-panel rounded-3xl border border-slate-800 p-8 space-y-4">
-          <div className="w-16 h-16 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center mx-auto text-slate-400">
-            <Briefcase className="w-8 h-8" />
+        <div className="text-center py-16 bg-[#FFFFFF] rounded-2xl border border-[#E9E6DF] p-6 space-y-3 shadow-card">
+          <div className="w-12 h-12 rounded-xl bg-[#FAF9F6] border border-[#E9E6DF] flex items-center justify-center mx-auto text-[#666666]">
+            <Briefcase className="w-6 h-6" />
           </div>
-          <h3 className="text-xl font-bold text-white">No verified positions match your filters</h3>
-          <p className="text-xs text-slate-400 max-w-md mx-auto">
-            Try adjusting your search query, location, or skills filter. Remember that listings only appear when their company is verified by our admin team.
+          <h3 className="text-base font-bold text-[#202124]">No positions match criteria</h3>
+          <p className="text-xs text-[#666666] max-w-sm mx-auto">
+            Try adjusting your search keywords, location or role filters.
           </p>
           <Button variant="secondary" size="sm" onClick={clearAllFilters}>
-            Clear All Filters
+            Clear Filters
           </Button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {jobs.map((job) => (
             <JobCard
               key={job._id}

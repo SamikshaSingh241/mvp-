@@ -6,12 +6,18 @@ const candidateRoutes = require('./candidateRoutes');
 const recruiterRoutes = require('./recruiterRoutes');
 const jobRoutes = require('./jobRoutes');
 const adminRoutes = require('./adminRoutes');
+const planRoutes = require('./planRoutes');
+const paymentRoutes = require('./paymentRoutes');
+const subscriptionRoutes = require('./subscriptionRoutes');
 
 router.use('/auth', authRoutes);
 router.use('/candidate', candidateRoutes);
 router.use('/recruiter', recruiterRoutes);
 router.use('/jobs', jobRoutes);
 router.use('/admin', adminRoutes);
+router.use('/plans', planRoutes);
+router.use('/payments', paymentRoutes);
+router.use('/subscriptions', subscriptionRoutes);
 
 // Health check endpoint
 router.get('/health', (req, res) => {

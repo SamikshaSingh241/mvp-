@@ -4,15 +4,13 @@ const { connectDB, disconnectDB } = require('./config/db');
 const { seedDatabase } = require('./utils/seedData');
 
 const run = async () => {
-  try {
-    await connectDB();
-    await seedDatabase();
-    console.log('[Seed] Database initialization finished.');
-    process.exit(0);
-  } catch (err) {
-    console.error('[Seed] Database initialization error:', err);
-    process.exit(1);
-  }
+  await connectDB();
+  await seedDatabase();
+  await disconnectDB();
+  process.exit(0);
 };
 
-run();
+run().catch((err) => {
+  console.error('Seed execution failed:', err);
+  process.exit(1);
+});

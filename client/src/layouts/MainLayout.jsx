@@ -5,7 +5,7 @@ import { Footer } from '../components/common/Footer';
 
 export const MainLayout = () => {
   return (
-    <div className="min-h-screen flex flex-col bg-navy-950 text-slate-100 selection:bg-blue-600 selection:text-white transition-colors duration-200">
+    <div className="min-h-screen flex flex-col bg-[#FAF9F6] text-[#202124]">
       <Navbar />
       <main className="flex-1">
         <Outlet />
@@ -14,3 +14,5 @@ export const MainLayout = () => {
     </div>
   );
 };
+
+export default MainLayout;

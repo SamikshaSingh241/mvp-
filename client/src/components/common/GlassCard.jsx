@@ -11,9 +11,9 @@ export const GlassCard = ({
   return (
     <div
       onClick={onClick}
-      className={`glass-card rounded-2xl p-6 ${
-        hoverEffect ? 'glass-card-hover' : ''
-      } ${glow ? 'shadow-glow' : ''} ${className}`}
+      className={`bg-[#FFFFFF] rounded-xl p-6 border border-[#E9E6DF] text-[#202124] shadow-card transition-all duration-200 ${
+        hoverEffect ? 'hover:border-[#C6A15B] hover:shadow-subtle' : ''
+      } ${className}`}
       {...props}
     >
       {children}

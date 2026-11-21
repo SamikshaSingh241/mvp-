@@ -34,7 +34,7 @@ Inspired by **Linear, Stripe, Vercel, Arc, and Mercury**:
 
 ---
 
-## 🛠️ Tech Stack & MERN Architecture
+## 🛠️ Tech Stack & PERN Architecture (PostgreSQL + Prisma)
 
 ```
 d:\mvp\
@@ -95,10 +95,17 @@ d:\mvp\
 
 ## ⚡ Quick Start Guide
 
-### 1. Database & Seeding
-Configured with MongoDB Atlas URI in `server/.env`:
+### 1. Database & Seeding (PostgreSQL + Prisma)
+Configured with PostgreSQL URI in `server/.env`:
+```env
+DATABASE_URL="postgresql://postgres:password@localhost:5432/truehire_db?schema=public"
 ```
-MONGODB_URI=mongodb+srv://samikshasingh091_db_user:8VaN41PFksY79zAg@cluster0.tbgw5pd.mongodb.net/truehire_db?retryWrites=true&w=majority
+
+Push schema to PostgreSQL and generate Prisma Client:
+```bash
+cd server
+npx prisma db push
+npx prisma generate
 ```
 
 To run seed:

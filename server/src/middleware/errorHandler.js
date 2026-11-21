@@ -1,7 +1,14 @@
 const { errorResponse } = require('../utils/apiResponse');
+const logger = require('../utils/logger');
 
 const errorHandler = (err, req, res, next) => {
-  console.error('[Error Middleware]:', err);
+  logger.error(err.message || 'Unhandled request error', 'HTTP_ERROR', {
+    method: req.method,
+    url: req.originalUrl,
+    ip: req.ip,
+    name: err.name,
+    statusCode: err.statusCode || 500
+  });
 
   if (err.name === 'ValidationError') {
     const messages = Object.values(err.errors).map((val) => val.message);

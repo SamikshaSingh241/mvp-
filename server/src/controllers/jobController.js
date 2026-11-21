@@ -29,6 +29,16 @@ const updateJob = async (req, res, next) => {
   }
 };
 
+const deleteJob = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const result = await jobService.deleteJob(req.user._id, id);
+    return successResponse(res, 'Job deleted successfully', result);
+  } catch (error) {
+    return errorResponse(res, error.message, 400);
+  }
+};
+
 const getPublicJobs = async (req, res, next) => {
   try {
     const filters = {
@@ -42,6 +52,10 @@ const getPublicJobs = async (req, res, next) => {
     };
 
     const data = await jobService.getPublicJobs(filters);
+    if (!Array.isArray(data?.jobs)) {
+      return errorResponse(res, 'Invalid public jobs response from service', 500);
+    }
+
     return successResponse(res, 'Verified public jobs retrieved successfully', data);
   } catch (error) {
     return errorResponse(res, error.message, 400);
@@ -62,6 +76,7 @@ module.exports = {
   createJob,
   getRecruiterJobs,
   updateJob,
+  deleteJob,
   getPublicJobs,
   getJobById
 };
